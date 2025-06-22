@@ -1,8 +1,10 @@
-package com.example.examplemod.platform;
+package com.example.modtemplate.platform;
 
-import com.example.examplemod.platform.services.IPlatformHelper;
+import com.example.modtemplate.platform.services.IPlatformHelper;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLPaths;
+import java.nio.file.Path;
 
 public class NeoForgePlatformHelper implements IPlatformHelper {
 
@@ -22,5 +24,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
     public boolean isDevelopmentEnvironment() {
 
         return !FMLLoader.isProduction();
+    }
+
+    @Override
+    public Path getConfigDirectory() {
+        return FMLPaths.CONFIGDIR.get();
     }
 }

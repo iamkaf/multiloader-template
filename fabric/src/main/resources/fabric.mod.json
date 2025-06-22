@@ -12,11 +12,11 @@
         "sources": "https://github.com/FabricMC/fabric-example-mod"
     },
     "license": "${license}",
-    "icon": "${mod_id}.png",
+    "icon": "icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.example.examplemod.ExampleMod"
+            "com.example.modtemplate.TemplateFabric"
         ]
     },
     "mixins": [
@@ -30,7 +30,7 @@
         "java": ">=${java_version}"
     },
     "suggests": {
-        "another-mod": "*"
+        "modmenu": ">=${mod_menu_version}"
     }
 }
   

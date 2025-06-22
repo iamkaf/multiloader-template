@@ -1,4 +1,4 @@
-package com.example.examplemod.platform.services;
+package com.example.modtemplate.platform.services;
 
 public interface IPlatformHelper {
 
@@ -23,6 +23,13 @@ public interface IPlatformHelper {
      * @return True if in a development environment, false otherwise.
      */
     boolean isDevelopmentEnvironment();
+
+    /**
+     * Returns the root directory for configuration files.
+     *
+     * @return The config directory path.
+     */
+    java.nio.file.Path getConfigDirectory();
 
     /**
      * Gets the name of the environment type as a string.
