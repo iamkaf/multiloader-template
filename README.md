@@ -14,6 +14,8 @@ The original template repository lives at [iamkaf/template-mod](https://github.c
 3. When bumping to a new Minecraft version, run `python scripts/set_minecraft_version.py <version>` to pull matching dependency versions.
 4. Replace the placeholder code in `TemplateMod` with your own logic.
 5. Run the Gradle `build` task to produce jars for each loader.
+6. After building, run `python scripts/open_libs.py <loader>` to open the
+   corresponding `build/libs` folder in your file explorer.
 
 ## Directory layout
 
