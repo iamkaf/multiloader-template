@@ -13,6 +13,8 @@ open-libs              - open the build/libs folder for a given loader
 set-minecraft-version  - update gradle.properties with dependency versions
 setup                  - initialise the template after cloning
 update                 - download and replace Moddy with the newest version
+help                   - show this help information
+version                - print Moddy's version
 ```
 
 Run ``moddy.py help`` at any time to show the command list.
@@ -37,7 +39,7 @@ from pathlib import Path
 AUTO_YES = False
 
 # Current Moddy version. Bump this when publishing updates.
-MODDY_VERSION = "0.2.0"
+MODDY_VERSION = "0.3.0"
 # URLs used by the ``update`` command.
 VERSION_REGISTRY_URL = (
     "https://raw.githubusercontent.com/iamkaf/modresources/main/moddy/versions.json"
@@ -525,15 +527,21 @@ def cmd_update(args: argparse.Namespace) -> None:
     """Download the latest version of Moddy and replace this file."""
     # Users should be aware that running the downloaded code could be risky.
     print("WARNING: this will download and execute code from the internet.")
-    print(f"Registry: {VERSION_REGISTRY_URL}")
-    if not AUTO_YES and input("Are you sure you want to continue? [y/N] ").lower() != "y":
-        print("Aborted")
-        return
     try:
         registry = json.loads(_fetch_url_text(VERSION_REGISTRY_URL))
         latest = registry[0]
         update_url = RAW_BASE_URL + latest.get("source", "")
-        print(f"Source: {update_url}")
+    except Exception as e:
+        print(f"Failed to check for updates: {e}")
+        return
+
+    print(f"Registry: {VERSION_REGISTRY_URL}")
+    print(f"Source: {update_url}")
+    if not AUTO_YES and input("Are you sure you want to continue? [y/N] ").lower() != "y":
+        print("Aborted")
+        return
+
+    try:
         new_code = _fetch_url_text(update_url)
     except Exception as e:
         print(f"Failed to download update: {e}")
@@ -558,6 +566,27 @@ def cmd_update(args: argparse.Namespace) -> None:
 
 
 # ---------------------------------------------------------------------------
+# help and version commands
+# ---------------------------------------------------------------------------
+
+def cmd_help(args: argparse.Namespace) -> None:
+    """Show available commands."""
+    parser = build_parser()
+    parser.print_help()
+    print("\nCommands:")
+    for name, func in COMMANDS.items():
+        if func is cmd_help:
+            continue
+        doc = (func.__doc__ or "").strip().splitlines()[0]
+        print(f"  {name:<22} {doc}")
+
+
+def cmd_version(args: argparse.Namespace) -> None:
+    """Print Moddy's version."""
+    print(MODDY_VERSION)
+
+
+# ---------------------------------------------------------------------------
 # command line interface
 # ---------------------------------------------------------------------------
 
@@ -577,6 +606,18 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+# Map command names to handler functions
+COMMANDS = {
+    "add-service": cmd_add_service,
+    "open-libs": cmd_open_libs,
+    "set-minecraft-version": cmd_set_minecraft_version,
+    "setup": cmd_setup,
+    "update": cmd_update,
+    "help": cmd_help,
+    "version": cmd_version,
+}
+
+
 def main(argv=None) -> None:
     parser = build_parser()
     # Parse global options (-y) and the command name first
@@ -585,21 +626,11 @@ def main(argv=None) -> None:
     AUTO_YES = ns.yes
     command = ns.command or "help"
 
-    subparsers = {
-        "add-service": cmd_add_service,
-        "open-libs": cmd_open_libs,
-        "set-minecraft-version": cmd_set_minecraft_version,
-        "setup": cmd_setup,
-        "update": cmd_update,
-        "help": lambda a: parser.print_help(),
-        "version": lambda a: print(MODDY_VERSION),
-    }
-
-    if command not in subparsers:
+    if command not in COMMANDS:
         parser.print_help()
         return
 
-    func = subparsers[command]
+    func = COMMANDS[command]
     subparser = argparse.ArgumentParser(prog=f"{Path(sys.argv[0]).name} {command}")
 
     if func is cmd_add_service:
