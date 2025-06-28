@@ -7,15 +7,13 @@ The original template repository lives at [iamkaf/template-mod](https://github.c
 ## Getting started
 
 1. Clone this repository.
-2. Run `python scripts/setup_mod.py` and answer the prompts. The script will
+2. Run `python scripts/moddy.py setup` and answer the prompts. The script will
    ask for your base package, mod id, name, author and initial version then
    update packages, class names and identifiers accordingly, and insert the
    version into `changelog.md`.
-3. When bumping to a new Minecraft version, run `python scripts/set_minecraft_version.py <version>` to pull matching dependency versions.
+3. When bumping to a new Minecraft version, run `python scripts/moddy.py set-minecraft-version <version>` to pull matching dependency versions.
 4. Replace the placeholder code in `TemplateMod` with your own logic.
 5. Run the Gradle `build` task to produce jars for each loader.
-6. After building, run `python scripts/open_libs.py <loader>` to open the
-   corresponding `build/libs` folder in your file explorer.
 
 ## Directory layout
 
@@ -27,4 +25,4 @@ Feel free to expand upon this structure to suit the needs of your own mods.
 
 ## Adding a new service
 
-Add a new platform service with `python scripts/add_service.py <ServiceName>`.
+Add a new platform service with `python scripts/moddy.py add-service <ServiceName>`.
