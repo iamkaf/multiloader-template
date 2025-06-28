@@ -37,11 +37,12 @@ from pathlib import Path
 AUTO_YES = False
 
 # Current Moddy version. Bump this when publishing updates.
-MODDY_VERSION = "0.1.0"
-# URL of the latest Moddy script used by the ``update`` command.
-UPDATE_URL = (
-    "https://raw.githubusercontent.com/iamkaf/modresources/main/moddy/moddy.py"
+MODDY_VERSION = "0.2.0"
+# URLs used by the ``update`` command.
+VERSION_REGISTRY_URL = (
+    "https://raw.githubusercontent.com/iamkaf/modresources/main/moddy/versions.json"
 )
+RAW_BASE_URL = "https://raw.githubusercontent.com/iamkaf/modresources/main"
 
 
 # ---------------------------------------------------------------------------
@@ -524,12 +525,16 @@ def cmd_update(args: argparse.Namespace) -> None:
     """Download the latest version of Moddy and replace this file."""
     # Users should be aware that running the downloaded code could be risky.
     print("WARNING: this will download and execute code from the internet.")
-    print(f"Source: {UPDATE_URL}")
+    print(f"Registry: {VERSION_REGISTRY_URL}")
     if not AUTO_YES and input("Are you sure you want to continue? [y/N] ").lower() != "y":
         print("Aborted")
         return
     try:
-        new_code = _fetch_url_text(UPDATE_URL)
+        registry = json.loads(_fetch_url_text(VERSION_REGISTRY_URL))
+        latest = registry[0]
+        update_url = RAW_BASE_URL + latest.get("source", "")
+        print(f"Source: {update_url}")
+        new_code = _fetch_url_text(update_url)
     except Exception as e:
         print(f"Failed to download update: {e}")
         return
