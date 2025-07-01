@@ -19,6 +19,12 @@ dependencies {
 
 sourceSets.main.resources.srcDir('src/generated/resources')
 
+fabricApi {
+    configureDataGeneration {
+        client = true
+    }
+}
+
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
@@ -39,15 +45,6 @@ loom {
             setConfigName('Fabric Server')
             ideConfigGenerated(true)
             runDir('runs/server')
-        }
-        datagen {
-            server()
-            setConfigName('Fabric Datagen')
-            ideConfigGenerated(true)
-            runDir('runs/datagen')
-            vmArg '-Dfabric-api.datagen'
-            vmArg "-Dfabric-api.datagen.output-dir=${project.file('src/generated/resources')}"
-            vmArg "-Dfabric-api.datagen.modid=${mod_id}"
         }
     }
 }
