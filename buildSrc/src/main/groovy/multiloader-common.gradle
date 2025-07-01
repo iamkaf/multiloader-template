@@ -4,7 +4,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_id}-${project.name}-${minecraft_version}"
+    archivesName = "${mod_id}-${project.name}"
 }
 
 java {
@@ -45,6 +45,10 @@ repositories {
     maven {
         name = 'TerraformersMC'
         url = 'https://maven.terraformersmc.com/'
+    }
+    maven {
+        name = "Kaf Mod Resources"
+        url = "https://raw.githubusercontent.com/iamkaf/modresources/main/maven/"
     }
 }
 
@@ -126,13 +130,15 @@ processResources {
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
-            artifactId base.archivesName.get()
+            groupId = "${group}"
+            artifactId = "${mod_id}-${project.name}"
             from components.java
         }
     }
     repositories {
         maven {
-            url System.getenv('local_maven_url')
+            name = "ModResources"
+            url = file(System.getenv("MOD_RESOURCES").concat(File.separator).concat("maven"))
         }
     }
 }

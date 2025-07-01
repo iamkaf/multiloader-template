@@ -13,6 +13,8 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     modImplementation "com.terraformersmc:modmenu:${mod_menu_version}"
+    // Uncomment the next line if you want to use Amber
+    //modImplementation "com.iamkaf.amber:amber-fabric:${amber_version}"
 }
 
 loom {
@@ -92,8 +94,7 @@ publisher {
     // setArtifact("build/libs/mymod.jar")
     // setArtifact(jar.getArchiveFile().get())
     // If this is a task, the task specified will be executed before publishing
-    var toPublish = "build/libs/$mod_id-$project.name-$project.minecraft_version-$project.version" + ".jar";
-    setArtifact(toPublish)
+    setArtifact(jar.getArchiveFile().get().getAsFile().toString())
     setDisableEmptyJarCheck(false)
 
     // Add supported java versions. Currently only used by CurseForge

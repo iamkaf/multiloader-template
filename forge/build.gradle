@@ -4,9 +4,7 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
     id 'com.hypherionmc.modutils.modpublisher'
 }
-base {
-    archivesName = "${mod_id}-forge-${minecraft_version}"
-}
+
 mixin {
     config("${mod_id}.mixins.json")
     config("${mod_id}.forge.mixins.json")
@@ -78,6 +76,9 @@ dependencies {
 
     // Forge's hack fix
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+
+    // Uncomment this line if you want to use Amber
+    //implementation "com.iamkaf.amber:amber-forge:${amber_version}"
 }
 
 publishing {
@@ -147,8 +148,7 @@ publisher {
     // setArtifact("build/libs/mymod.jar")
     // setArtifact(jar.getArchiveFile().get())
     // If this is a task, the task specified will be executed before publishing
-    var toPublish = "build/libs/$mod_id-$project.name-$project.minecraft_version-$project.version" + ".jar";
-    setArtifact(toPublish)
+    setArtifact(jar.getArchiveFile().get().getAsFile().toString())
     setDisableEmptyJarCheck(false)
 
     // Add supported java versions. Currently only used by CurseForge
