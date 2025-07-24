@@ -25,3 +25,10 @@ mandatory = true
 versionRange = "${minecraft_version_range}"
 ordering = "NONE"
 side = "BOTH"
+# Uncomment the following lines if you are using Amber for your mod.
+#[[dependencies.${mod_id}]]
+#modId = "amber"
+#mandatory = true
+#versionRange = "[${amber_version},)"
+#ordering = "BEFORE"
+#side = "BOTH"

@@ -96,6 +96,7 @@ processResources {
             'group'                        : project.group, //Else we target the task's group.
             'minecraft_version'            : minecraft_version,
             'minecraft_version_range'      : minecraft_version_range,
+            'fabric_version_range'         : fabric_version_range,
             'fabric_version'               : fabric_version,
             'fabric_loader_version'        : fabric_loader_version,
             'mod_menu_version'            : mod_menu_version,
@@ -111,6 +112,10 @@ processResources {
             'credits'                      : credits,
             'java_version'                 : java_version
     ]
+
+    if (project.hasProperty('amber_version')) {
+        expandProps['amber_version'] = project['amber_version']
+    }
 
     var jsonExpandProps = expandProps.collectEntries {
         key, value -> [(key): value instanceof String ? value.replace("\n", "\\\\n") : value]

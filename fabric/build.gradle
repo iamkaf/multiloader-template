@@ -102,7 +102,7 @@ publisher {
     // setArtifact("build/libs/mymod.jar")
     // setArtifact(jar.getArchiveFile().get())
     // If this is a task, the task specified will be executed before publishing
-    setArtifact(jar.getArchiveFile().get().getAsFile().toString())
+    setArtifact("build/libs/${mod_id}-${project.name}-${project.version}.jar")
     setDisableEmptyJarCheck(false)
 
     // Add supported java versions. Currently only used by CurseForge
