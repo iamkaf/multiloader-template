@@ -125,7 +125,7 @@ publisher {
 
     // Fancy display name for the upload.
     // Will default to the project version if not set
-    setDisplayName("$mod_id-$project.name-$project.minecraft_version-$project.version")
+    setDisplayName("$mod_id-$project.name-$project.version")
 
     // The supported game versions
     setGameVersions(game_versions.split(','))
