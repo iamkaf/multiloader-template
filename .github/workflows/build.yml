@@ -63,12 +63,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Detect Java version
+        id: java
+        run: |
+          v=$(sed -nE 's/^java_version=([0-9]+).*/\1/p' "${{ matrix.version }}/gradle.properties" | head -n1)
+          if [ -z "$v" ]; then v=21; fi
+          echo "version=$v" >> $GITHUB_OUTPUT
       
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '${{ steps.java.outputs.version }}'
       
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -112,12 +119,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Detect Java version
+        id: java
+        run: |
+          v=$(sed -nE 's/^java_version=([0-9]+).*/\1/p' "${{ matrix.version }}/gradle.properties" | head -n1)
+          if [ -z "$v" ]; then v=21; fi
+          echo "version=$v" >> $GITHUB_OUTPUT
       
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '${{ steps.java.outputs.version }}'
       
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
