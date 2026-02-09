@@ -11,7 +11,7 @@ This repo is a minimal, reusable mod template built for Fabric, Forge, and NeoFo
 ## 🗂️ Monorepo Structure
 
 ```
-mod-template/
+multiloader-template/
 ├── 1.21.10/         # Minecraft 1.21.10 version
 │   ├── common/      # Shared code across loaders
 │   ├── fabric/      # Fabric-specific implementation
