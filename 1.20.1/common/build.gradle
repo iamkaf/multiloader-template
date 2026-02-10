@@ -1,11 +1,23 @@
 plugins {
     id 'multiloader-common'
-    // NeoForge did not exist for 1.20.1
+    id 'net.neoforged.moddev.legacyforge'
+}
+
+legacyForge {
+    mcpVersion = libs.versions.minecraft.get()
+    // Automatically enable AccessTransformers if the file exists
+    if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
+        accessTransformers = ['src/main/resources/META-INF/accesstransformer.cfg']
+    }
+    parchment {
+        minecraftVersion = libs.versions.parchment.minecraft.get()
+        mappingsVersion = libs.parchment.get().version.toString()
+    }
 }
 
 dependencies {
     compileOnly libs.mixin
-    // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
+    // fabric and forge both bundle mixinextras, so it is safe to use it in common
     compileOnly libs.mixin.extras
     annotationProcessor libs.mixin.extras
     implementation libs.gson

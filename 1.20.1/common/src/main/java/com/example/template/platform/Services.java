@@ -20,7 +20,7 @@ public final class Services {
         final T loadedService = ServiceLoader.load(clazz)
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        Constants.debug("Loaded " + loadedService + " for service " + clazz);
+        Constants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
         return loadedService;
     }
 

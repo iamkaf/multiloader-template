@@ -1,21 +1,19 @@
 package com.example.template;
 
-/**
- * Keep common code for 1.20.1 free of direct Minecraft classes.
- * (This version doesn't use NeoForm in :common, so MC types aren't on the compile classpath.)
- */
+import net.minecraft.resources.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class Constants {
     public static final String MOD_ID = "template";
     public static final String MOD_NAME = "Template";
+    public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
     private Constants() {
     }
 
-    public static void info(String msg) {
-        System.out.println("[" + MOD_NAME + "/INFO] " + msg);
-    }
-
-    public static void debug(String msg) {
-        System.out.println("[" + MOD_NAME + "/DEBUG] " + msg);
+    public static ResourceLocation resource(String path) {
+        // 1.20.x uses the (namespace, path) constructor.
+        return new ResourceLocation(MOD_ID, path);
     }
 }

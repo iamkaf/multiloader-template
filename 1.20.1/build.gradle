@@ -1,8 +1,7 @@
 plugins {
     alias(libs.plugins.fabric.loom) apply false
-
-    // NeoForge did not exist for 1.20.1
-    // alias(libs.plugins.neoforge.moddev) apply false
+    // Provides MC mappings/classes to :common for 1.20.1 (Forge era)
+    alias(libs.plugins.legacyforge) apply false
 
     alias(libs.plugins.forgegradle) apply false
     alias(libs.plugins.mixin) apply false

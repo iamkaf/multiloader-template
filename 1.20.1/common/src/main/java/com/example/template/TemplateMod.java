@@ -14,7 +14,7 @@ public final class TemplateMod {
      * Called during mod initialization for all loaders.
      */
     public static void init() {
-        Constants.info("Initializing " + Constants.MOD_NAME + " on " + Services.PLATFORM.getPlatformName() + "...");
+        Constants.LOG.info("Initializing {} on {}...", Constants.MOD_NAME, Services.PLATFORM.getPlatformName());
 
         // Amber initialization changed across MC versions.
         // - Newer: com.iamkaf.amber.api.core.v2.AmberInitializer#initialize(String)
