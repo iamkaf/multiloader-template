@@ -1,0 +1,31 @@
+plugins {
+    id 'multiloader-common'
+    // NeoForge did not exist for 1.20.1
+}
+
+dependencies {
+    compileOnly libs.mixin
+    // fabric and neoforge both bundle mixinextras, so it is safe to use it in common
+    compileOnly libs.mixin.extras
+    annotationProcessor libs.mixin.extras
+    implementation libs.gson
+
+    // Amber integration
+    implementation libs.amber
+}
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+    commonResources {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    commonJava sourceSets.main.java.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.files
+}
