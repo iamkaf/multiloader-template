@@ -1,7 +1,5 @@
 plugins {
-    // The 1.20.1 catalog currently pins an older Loom that isn't compatible with our Gradle.
-    // Override Loom here to a version that works with Gradle 8.14.
-    id 'fabric-loom' version '1.8.13' apply false
+    alias(libs.plugins.fabric.loom) apply false
 
     // NeoForge did not exist for 1.20.1
     // alias(libs.plugins.neoforge.moddev) apply false
