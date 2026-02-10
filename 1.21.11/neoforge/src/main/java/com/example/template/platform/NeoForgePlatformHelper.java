@@ -19,7 +19,10 @@ public class NeoForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public boolean isDevelopmentEnvironment() {
-        return !FMLLoader.isProduction();
+        // In newer NeoForge/FML, isProduction() is an instance method.
+        // getCurrentOrNull() keeps this safe for unusual early-init/unit-test contexts.
+        var loader = FMLLoader.getCurrentOrNull();
+        return loader == null || !loader.isProduction();
     }
 
     @Override
