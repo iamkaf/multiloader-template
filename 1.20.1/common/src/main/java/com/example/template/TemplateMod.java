@@ -16,16 +16,7 @@ public final class TemplateMod {
     public static void init() {
         Constants.LOG.info("Initializing {} on {}...", Constants.MOD_NAME, Services.PLATFORM.getPlatformName());
 
-        // Amber initialization changed across MC versions.
-        // - Newer: com.iamkaf.amber.api.core.v2.AmberInitializer#initialize(String)
-        // - Older: no explicit initializer class (Amber is just used as an API dependency)
-        try {
-            Class<?> initializer = Class.forName("com.iamkaf.amber.api.core.v2.AmberInitializer");
-            initializer.getMethod("initialize", String.class).invoke(null, Constants.MOD_ID);
-        } catch (ClassNotFoundException ignored) {
-            // No-op on older Amber versions.
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Failed to initialize Amber", e);
-        }
+        // AmberInitializer does not exist on 1.20.1-era Amber.
+        // Amber is available purely as an API dependency here; no explicit init call.
     }
 }

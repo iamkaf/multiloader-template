@@ -19,14 +19,13 @@ dependencies {
 
 //sourceSets.main.resources.srcDir('src/generated/resources')
 
-// Data gen configuration (fabricApi { ... }) varies across Loom/Fabric API versions.
-// If you need datagen for this MC version, wire it up after verifying the Loom DSL.
-//fabricApi {
-//    configureDataGeneration {
-//        // TODO: configure for Loom 1.8.x
-//        outputDirectory = file('../common/src/main/generated')
-//    }
-//}
+fabricApi {
+    configureDataGeneration {
+        // NOTE: Loom DSL differs across versions; keep this minimal.
+        // (Removed `client = true` for compatibility with older Loom DSL.)
+        outputDirectory = file('../common/src/main/generated')
+    }
+}
 
 loom {
     def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
