@@ -29,6 +29,8 @@ multiloader-template/
 
 | Minecraft Version | Status | Directory |
 |-------------------|--------|-----------|
+| 1.20.1           | ✅ Active | `1.20.1/` |
+| 1.21.1           | ✅ Active | `1.21.1/` |
 | 1.21.10           | ✅ Active | `1.21.10/` |
 | 1.21.11           | ✅ Active | `1.21.11/` |
 
