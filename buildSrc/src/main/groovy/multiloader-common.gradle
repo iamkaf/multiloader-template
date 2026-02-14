@@ -109,6 +109,12 @@ processResources {
             'neoforge_loader_version_range': neoforge_loader_version_range,
             "forge_version": forge_version,
             "forge_loader_version_range": forge_loader_version_range,
+<<<<<<< HEAD:buildSrc/src/main/groovy/multiloader-common.gradle
+=======
+            'amber_version'                : libs.amber.neoforge.get().version.toString(),
+            'parchment_minecraft'          : libs.versions.parchment.minecraft.get(),
+            'parchment_version'            : libs.parchment.get().version.toString(),
+>>>>>>> parent of 9200a20 (chore: upstream amber_version fix from Amber repo to prevent self-dependency breakage):1.21.1/buildSrc/src/main/groovy/multiloader-common.gradle
             'credits'                      : credits,
             'java_version'                 : java_version
     ]
