@@ -116,7 +116,7 @@ processResources {
             "forge_version": libs.forge.get().version.toString(),
             "forge_loader_version_range": forge_loader_version_range,
             // Amber integration (Forge-only for 1.20.1)
-            'amber_version'                : project.version.toString(), // Amber does not depend on itself; keep placeholder for resource expansion
+            'amber_version'                : libs.amber.forge.get().version.toString(),
             'parchment_minecraft'          : libs.versions.parchment.minecraft.get(),
             'parchment_version'            : libs.parchment.get().version.toString(),
             'credits'                      : credits,
