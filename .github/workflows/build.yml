@@ -59,7 +59,7 @@ jobs:
         version: ${{ fromJson(needs.detect-changes.outputs.versions) }}
         loader: [fabric, forge, neoforge]
       fail-fast: false
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,15 +68,19 @@ jobs:
         id: java
         run: |
           v=$(sed -nE 's/^java_version=([0-9]+).*/\1/p' "${{ matrix.version }}/gradle.properties" | head -n1)
-          if [ -z "$v" ]; then v=21; fi
+          if [ -z "$v" ]; then
+            echo "java_version not found in ${{ matrix.version }}/gradle.properties" >&2
+            exit 1
+          fi
           echo "version=$v" >> $GITHUB_OUTPUT
-      
+          echo "Using Java $v for ${{ matrix.version }}"
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '${{ steps.java.outputs.version }}'
-      
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
@@ -115,7 +119,7 @@ jobs:
     strategy:
       matrix:
         version: ${{ fromJson(needs.detect-changes.outputs.versions) }}
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -124,15 +128,19 @@ jobs:
         id: java
         run: |
           v=$(sed -nE 's/^java_version=([0-9]+).*/\1/p' "${{ matrix.version }}/gradle.properties" | head -n1)
-          if [ -z "$v" ]; then v=21; fi
+          if [ -z "$v" ]; then
+            echo "java_version not found in ${{ matrix.version }}/gradle.properties" >&2
+            exit 1
+          fi
           echo "version=$v" >> $GITHUB_OUTPUT
-      
+          echo "Using Java $v for ${{ matrix.version }}"
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '${{ steps.java.outputs.version }}'
-      
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 

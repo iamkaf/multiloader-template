@@ -24,22 +24,30 @@ loader-enabled version loader:
     echo "false"; \
   fi
 
-# Internal helper: run Gradle in a version folder, selecting Java based on `java_version=` in gradle.properties.
-# Uses SDKMAN when available.
-_gradle version *args:
-  @cd "{{version}}" && \
-  if command -v sdk >/dev/null 2>&1; then \
-    if [ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]; then source "$HOME/.sdkman/bin/sdkman-init.sh"; fi; \
+# Run Gradle inside a specific version folder, switching the JVM based on
+# `java_version=` in <version>/gradle.properties.
+#
+# We avoid calling `sdk use` because `sdk` is a shell function and is unreliable
+# in non-interactive shells; instead we set JAVA_HOME directly to SDKMAN's
+# installed candidates.
+with-java version *args:
+  @cd "{{version}}"; \
     java_version=$(sed -nE 's/^java_version=([0-9]+).*/\1/p' gradle.properties | head -n1); \
-    if [ -n "$java_version" ]; then \
-      case "$java_version" in \
-        21) sdk use java 21.0.9-tem >/dev/null ;; \
-        25) sdk use java 25.0.2-tem >/dev/null ;; \
-        *) echo "Unsupported java_version=$java_version (expected 21 or 25)"; exit 1 ;; \
-      esac; \
+    sdkman_path=""; \
+    case "$java_version" in \
+      21) sdkman_path="$HOME/.sdkman/candidates/java/21.0.9-tem" ;; \
+      25) sdkman_path="$HOME/.sdkman/candidates/java/25.0.2-tem" ;; \
+      *) echo "Unsupported or missing java_version=$java_version in {{version}}/gradle.properties"; exit 1 ;; \
+    esac; \
+    if [ -d "$sdkman_path" ]; then \
+      export JAVA_HOME="$sdkman_path"; \
+      export PATH="$JAVA_HOME/bin:$PATH"; \
+    elif [ -n "$JAVA_HOME" ] && [ -d "$JAVA_HOME" ]; then \
+      echo "SDKMAN path not found; using existing JAVA_HOME=$JAVA_HOME"; \
+    else \
+      echo "No valid Java installation found for java_version=$java_version"; exit 1; \
     fi; \
-  fi; \
-  ./gradlew {{args}}
+    ./gradlew {{args}}
 
 # Run arbitrary Gradle tasks.
 # - If the first arg is a version directory, run only there.
@@ -48,10 +56,10 @@ run first="" *rest:
   @if [ -z "{{first}}" ]; then echo "Usage: just run [version] <gradle args>"; exit 1; fi
   @if [ -d "{{first}}" ] && echo "{{first}}" | grep -Eq '^[0-9]'; then \
     if [ -z "{{rest}}" ]; then echo "Usage: just run [version] <gradle args>"; exit 1; fi; \
-    just _gradle "{{first}}" {{rest}}; \
+    just with-java "{{first}}" {{rest}}; \
   else \
     for v in $(ls -1d */ | sed 's:/$::' | grep -E '^[0-9]' | sort -V); do \
-      echo "==> $v"; just _gradle "$v" {{first}} {{rest}}; \
+      echo "==> $v"; just with-java "$v" {{first}} {{rest}}; \
     done; \
   fi
 
@@ -61,7 +69,7 @@ build version="":
       echo "==> $v"; \
       for loader in fabric forge neoforge; do \
         if [ "$(just loader-enabled "$v" "$loader")" = "true" ]; then \
-          just _gradle "$v" :$loader:build; \
+          just with-java "$v" :$loader:build; \
         else \
           echo "Skipping $v:$loader (not included in settings.gradle)"; \
         fi; \
@@ -71,7 +79,7 @@ build version="":
     if [ ! -d "{{version}}" ]; then echo "Version {{version}} not found."; exit 1; fi; \
     for loader in fabric forge neoforge; do \
       if [ "$(just loader-enabled "{{version}}" "$loader")" = "true" ]; then \
-        just _gradle "{{version}}" :$loader:build; \
+        just with-java "{{version}}" :$loader:build; \
       else \
         echo "Skipping {{version}}:$loader (not included in settings.gradle)"; \
       fi; \
@@ -81,11 +89,11 @@ build version="":
 test version="":
   @if [ -z "{{version}}" ]; then \
     for v in $(ls -1d */ | sed 's:/$::' | grep -E '^[0-9]' | sort -V); do \
-      echo "==> $v"; just _gradle "$v" test; \
+      echo "==> $v"; just with-java "$v" test; \
     done; \
   else \
     if [ ! -d "{{version}}" ]; then echo "Version {{version}} not found."; exit 1; fi; \
-    just _gradle "{{version}}" test; \
+    just with-java "{{version}}" test; \
   fi
 
 changed base="origin/main":
@@ -102,7 +110,7 @@ build-changed base="origin/main":
     echo "==> $v"; \
     for loader in fabric forge neoforge; do \
       if [ "$(just loader-enabled "$v" "$loader")" = "true" ]; then \
-        just _gradle "$v" :$loader:build; \
+        just with-java "$v" :$loader:build; \
       else \
         echo "Skipping $v:$loader (not included in settings.gradle)"; \
       fi; \
@@ -111,7 +119,7 @@ build-changed base="origin/main":
 
 build-loader version loader *args:
   @if [ "$(just loader-enabled "{{version}}" "{{loader}}")" = "true" ]; then \
-    just _gradle "{{version}}" :{{loader}}:build {{args}}; \
+    just with-java "{{version}}" :{{loader}}:build {{args}}; \
   else \
     echo "Skipping {{version}}:{{loader}} (not included in settings.gradle)"; \
   fi
@@ -121,7 +129,7 @@ test-changed base="origin/main":
   @changed=$(git diff --name-only "{{base}}"...HEAD | grep -oP '^[0-9]+\\.[0-9]+[^/]*' | sort -u); \
   if [ -z "$changed" ]; then echo "No changed versions."; exit 0; fi; \
   for v in $changed; do \
-    echo "==> $v"; just _gradle "$v" test; \
+    echo "==> $v"; just with-java "$v" test; \
   done
 
 # Copy an existing version folder to create a new one.
