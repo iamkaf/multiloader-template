@@ -40,6 +40,7 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
+        mavenLocal()
         maven { url = uri("https://maven.kaf.sh") }
         mavenCentral()
     }
@@ -57,4 +58,4 @@ rootProject.name = mod_name
 include('common')
 include('fabric')
 include('neoforge')
-// include('forge')
+include('forge')
