@@ -44,6 +44,7 @@ dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${libs.versions.minecraft.get()}-${libs.forge.get().version.toString()}")
 
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
+    implementation libs.amber.forge
     implementation libs.gson
 }
 
