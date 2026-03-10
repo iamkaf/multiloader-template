@@ -3,21 +3,10 @@ plugins {
 }
 
 dependencies {
-    minecraft libs.minecraft
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment(libs.parchment)
-    }
-    modImplementation libs.fabric.loader
     modImplementation libs.fabric.api
     modImplementation libs.modmenu
     // Uncomment the next line if you want to use Amber
     modImplementation libs.amber.fabric
 }
 
-fabricApi {
-    configureDataGeneration {
-        client = true
-        outputDirectory = file('../common/src/main/generated')
-    }
-}
+enableCommonFabricDatagen.call()

@@ -3,12 +3,6 @@ plugins {
 }
 
 dependencies {
-    minecraft libs.minecraft
-    mappings loom.layered {
-        officialMojangMappings()
-        parchment(libs.parchment)
-    }
-    modImplementation libs.fabric.loader
     modImplementation libs.fabric.api
     modImplementation libs.modmenu
     // Uncomment the next line if you want to use Amber
@@ -17,8 +11,4 @@ dependencies {
 
 // Data gen configuration (fabricApi { ... }) varies across Loom/Fabric API versions.
 // If you need datagen for this MC version, wire it up after verifying the Loom DSL.
-//fabricApi {
-//    configureDataGeneration {
-//        outputDirectory = file('../common/src/main/generated')
-//    }
-//}
+//enableCommonFabricDatagen()
