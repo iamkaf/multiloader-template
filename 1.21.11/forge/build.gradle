@@ -1,5 +1,4 @@
 plugins {
-    id 'multiloader-loader'
     id 'net.minecraftforge.gradle'
     id 'com.hypherionmc.modutils.modpublisher'
 }

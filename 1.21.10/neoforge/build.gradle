@@ -1,5 +1,4 @@
 plugins {
-    id 'multiloader-loader'
     id 'net.neoforged.moddev'
     id 'com.hypherionmc.modutils.modpublisher'
 }

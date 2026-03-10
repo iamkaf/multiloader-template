@@ -1,5 +1,4 @@
 plugins {
-    id 'multiloader-loader'
     id 'fabric-loom'
     id "com.hypherionmc.modutils.modpublisher"
 }
