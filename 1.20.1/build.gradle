@@ -1,4 +1,6 @@
 plugins {
+    id 'com.iamkaf.multiloader.root'
+    id 'com.iamkaf.multiloader.core' apply false
     alias(libs.plugins.fabric.loom) apply false
     // Provides MC mappings/classes to :common for 1.20.1 (Forge era)
     alias(libs.plugins.legacyforge) apply false
@@ -6,6 +8,10 @@ plugins {
     alias(libs.plugins.forgegradle) apply false
     alias(libs.plugins.mixin) apply false
     alias(libs.plugins.modpublisher) apply false
+}
+
+subprojects {
+    apply plugin: 'com.iamkaf.multiloader.core'
 }
 
 /**
