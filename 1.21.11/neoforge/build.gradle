@@ -1,48 +1,8 @@
 plugins {
-    id 'net.neoforged.moddev'
-    id 'com.hypherionmc.modutils.modpublisher'
+    id 'com.iamkaf.multiloader.neoforge'
 }
 
 dependencies {
     // Amber integration
     implementation libs.amber.neoforge
-}
-
-neoForge {
-    version = libs.neoforge.get().version.toString()
-    // Automatically enable neoforge AccessTransformers if the file exists
-    def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
-    if (at.exists()) {
-        accessTransformers.from(at.absolutePath)
-    }
-    parchment {
-        minecraftVersion = libs.versions.parchment.minecraft.get()
-        mappingsVersion = libs.parchment.get().version.toString()
-    }
-    runs {
-        configureEach {
-            systemProperty('neoforge.enabledGameTestNamespaces', mod_id)
-            ideName = "NeoForge ${it.name.capitalize()} (${project.path})" // Unify the run config names with fabric
-        }
-        client {
-            client()
-        }
-        data {
-            client()
-        }
-        server {
-            server()
-        }
-    }
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
-    }
-}
-
-//sourceSets.main.resources.srcDir('src/generated/resources')
-
-publisher {
-    configureCommonPublisher(delegate, 'neoforge', publisherJavaVersionsFor(java_version))
 }

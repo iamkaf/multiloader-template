@@ -1,10 +1,10 @@
 plugins {
+    id 'com.iamkaf.multiloader.common'
     id 'net.neoforged.moddev.legacyforge'
 }
 
 legacyForge {
     mcpVersion = libs.versions.minecraft.get()
-    // Automatically enable AccessTransformers if the file exists
     if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
         accessTransformers = ['src/main/resources/META-INF/accesstransformer.cfg']
     }
@@ -23,20 +23,4 @@ dependencies {
 
     // Amber integration
     implementation libs.amber
-}
-
-configurations {
-    commonJava {
-        canBeResolved = false
-        canBeConsumed = true
-    }
-    commonResources {
-        canBeResolved = false
-        canBeConsumed = true
-    }
-}
-
-artifacts {
-    commonJava sourceSets.main.java.sourceDirectories.singleFile
-    commonResources sourceSets.main.resources.sourceDirectories.files
 }

@@ -1,58 +1,8 @@
 plugins {
-    id 'net.minecraftforge.gradle'
-    id 'com.hypherionmc.modutils.modpublisher'
-}
-
-jar {
-    manifest {
-        attributes['MixinConfigs'] = "${mod_id}.mixins.json,${mod_id}.forge.mixins.json"
-    }
-}
-
-minecraft {
-    mappings channel: 'official', version: libs.versions.minecraft.get()
-
-    def at = file('src/main/resources/META-INF/accesstransformer.cfg')
-    if (at.exists()) {
-        accessTransformer = at
-    }
-
-    runs {
-        configureEach {
-            workingDir.convention layout.projectDirectory.dir('run')
-            args '--mixin.config', "${mod_id}.mixins.json"
-            args '--mixin.config', "${mod_id}.forge.mixins.json"
-        }
-
-        register('client') {
-        }
-
-        register('server') {
-            args '--nogui'
-        }
-    }
-}
-
-repositories {
-    minecraft.mavenizer(it)
-    maven fg.forgeMaven
-    maven fg.minecraftLibsMaven
+    id 'com.iamkaf.multiloader.forge'
 }
 
 dependencies {
-    implementation minecraft.dependency("net.minecraftforge:forge:${libs.versions.minecraft.get()}-${libs.forge.get().version.toString()}")
-
-    implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
     implementation libs.amber.forge
     implementation libs.gson
-}
-
-sourceSets.each {
-    def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
-    it.output.resourcesDir = dir
-    it.java.destinationDirectory = dir
-}
-
-publisher {
-    configureCommonPublisher(delegate, 'forge', publisherJavaVersionsFor(java_version))
 }

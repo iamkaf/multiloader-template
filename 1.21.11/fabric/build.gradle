@@ -1,6 +1,5 @@
 plugins {
-    id 'fabric-loom'
-    id "com.hypherionmc.modutils.modpublisher"
+    id 'com.iamkaf.multiloader.fabric'
 }
 
 dependencies {
@@ -16,39 +15,9 @@ dependencies {
     modImplementation libs.amber.fabric
 }
 
-//sourceSets.main.resources.srcDir('src/generated/resources')
-
 fabricApi {
     configureDataGeneration {
         client = true
         outputDirectory = file('../common/src/main/generated')
     }
-}
-
-loom {
-    def aw = project(':common').file("src/main/resources/${mod_id}.accesswidener")
-    if (aw.exists()) {
-        accessWidenerPath.set(aw)
-    }
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
-    }
-    runs {
-        client {
-            client()
-            setConfigName('Fabric Client')
-            ideConfigGenerated(true)
-            runDir('runs/client')
-        }
-        server {
-            server()
-            setConfigName('Fabric Server')
-            ideConfigGenerated(true)
-            runDir('runs/server')
-        }
-    }
-}
-
-publisher {
-    configureCommonPublisher(delegate, 'fabric', publisherJavaVersionsFor(java_version))
 }

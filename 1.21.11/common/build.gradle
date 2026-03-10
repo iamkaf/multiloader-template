@@ -1,10 +1,10 @@
 plugins {
+    id 'com.iamkaf.multiloader.common'
     id 'net.neoforged.moddev'
 }
 
 neoForge {
     neoFormVersion = libs.versions.neoform.get()
-    // Automatically enable AccessTransformers if the file exists
     def at = file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
@@ -24,20 +24,4 @@ dependencies {
 
     // Amber integration
     implementation libs.amber
-}
-
-configurations {
-    commonJava {
-        canBeResolved = false
-        canBeConsumed = true
-    }
-    commonResources {
-        canBeResolved = false
-        canBeConsumed = true
-    }
-}
-
-artifacts {
-    commonJava sourceSets.main.java.sourceDirectories.singleFile
-    commonResources sourceSets.main.resources.sourceDirectories.files
 }
