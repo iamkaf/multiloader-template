@@ -1,6 +1,7 @@
 pluginManagement {
     def multiloaderConventionsVersion = providers.gradleProperty('multiloader_conventions_version').get()
     repositories {
+        mavenLocal()
         maven { url = uri('https://maven.kaf.sh') }
         gradlePluginPortal()
         mavenCentral()
@@ -12,7 +13,7 @@ pluginManagement {
         id 'com.iamkaf.multiloader.fabric' version multiloaderConventionsVersion
         id 'com.iamkaf.multiloader.forge' version multiloaderConventionsVersion
         id 'com.iamkaf.multiloader.neoforge' version multiloaderConventionsVersion
-        id 'com.iamkaf.multiloader.core' version multiloaderConventionsVersion
+        id 'com.iamkaf.multiloader.publishing' version multiloaderConventionsVersion
     }
 }
 
