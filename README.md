@@ -38,7 +38,9 @@ multiloader-template/
 
 1. Pick a version folder (e.g. `1.21.11/`) and open it in your IDE.
 2. Update `gradle.properties` with your mod info:
-   - `mod_id`, `mod_name`, `mod_author`, `description`, `group`, and publishing IDs
+   - `project.*` for version/build coordinates
+   - `mod.*` for metadata
+   - `publish.*`, `dependencies.*`, and `environments.*` for release settings
 3. Update package names from `com.example.template` to your own group.
 4. Add your content in `common/src/main/java` and `common/src/main/resources`.
 

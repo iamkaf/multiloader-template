@@ -1,5 +1,5 @@
 pluginManagement {
-    def multiloaderConventionsVersion = providers.gradleProperty('multiloader_conventions_version').get()
+    def multiloaderConventionsVersion = providers.gradleProperty('project.plugins').get()
     repositories {
         mavenLocal()
         maven { url = uri('https://maven.kaf.sh') }
