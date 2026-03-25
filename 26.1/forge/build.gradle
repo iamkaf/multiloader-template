@@ -1,0 +1,8 @@
+plugins {
+    id 'com.iamkaf.multiloader.forge'
+}
+
+dependencies {
+    implementation libs.amber.forge
+    implementation libs.gson
+}
