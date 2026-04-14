@@ -1,8 +1,20 @@
 # Root-level gitignore for monorepo
 .DS_Store
+.gradle/
 .idea/
 .vscode/
 *.iml
-
-# Each version has its own .gitignore for build artifacts
-# This file is for root-level ignores only
+build/
+.stonecutter/
+stonecutter.gradle.kts
+common/build/
+common/versions/
+fabric/build/
+fabric/versions/
+forge/build/
+forge/versions/
+neoforge/build/
+neoforge/versions/
+forge/run/
+/forge/*.launch
+fabric/runs/

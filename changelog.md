@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial reusable multi-loader template with Amber integration.
+- Initial reusable multi-loader template.
 
 ## Types of changes
 

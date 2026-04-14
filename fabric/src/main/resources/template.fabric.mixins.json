@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.template.mixin",
+  "refmap": "${mod_id}.refmap.json",
+  "compatibilityLevel": "${mixin_compat_fabric}",
+  "mixins": [],
+  "client": [
+    "FabricBootMixin"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

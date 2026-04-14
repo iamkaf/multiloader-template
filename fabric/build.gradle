@@ -1,0 +1,173 @@
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.jvm.tasks.Jar
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.language.jvm.tasks.ProcessResources
+
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'fabric-loom' apply false
+    id 'net.fabricmc.fabric-loom' apply false
+}
+
+apply from: rootProject.file('gradle/project-helpers.gradle')
+
+def stonecutterBuild = extensions.getByType(dev.kikugie.stonecutter.build.StonecutterBuildExtension)
+def minecraftVersion = stonecutterBuild.current.version
+def versionDir = rootProject.file("versions/${minecraftVersion}")
+def requiredProp = { String name -> project.ext.requiredProp.call(project, name) }
+def optionalProp = { String name -> project.ext.optionalProp.call(project, name) }
+def catalog = project.ext.catalogFor.call(project, minecraftVersion)
+def library = { String alias -> project.ext.library.call(catalog, alias) }
+def versionOrNull = { String alias -> project.ext.versionOrNull.call(catalog, alias) }
+def useUnobfuscatedMinecraft = project.ext.useUnobfuscatedMinecraft.call(minecraftVersion)
+def modId = requiredProp('mod.id')
+def modName = requiredProp('mod.name')
+def loader = requiredProp('loader')
+def accessWidener = rootProject.file('common/src/main/resources/template.accesswidener')
+def commonProject = project(":common:${minecraftVersion}")
+def commonGeneratedJavaDir = commonProject.layout.buildDirectory.dir('generated/stonecutter/main/java')
+def commonGeneratedResourcesDir = commonProject.layout.buildDirectory.dir('generated/stonecutter/main/resources')
+def generatedJavaDir = layout.buildDirectory.dir('generated/stonecutter/main/java')
+def generatedResourcesDir = layout.buildDirectory.dir('generated/stonecutter/main/resources')
+
+apply plugin: useUnobfuscatedMinecraft ? 'net.fabricmc.fabric-loom' : 'fabric-loom'
+
+group = requiredProp('project.group')
+version = requiredProp('project.version')
+
+base {
+    archivesName = "${modId}-${loader}"
+}
+
+project.ext.sharedRepositories.call(project)
+
+sourceSets {
+    main {
+        java.srcDirs = [
+            commonGeneratedJavaDir.get().asFile,
+            generatedJavaDir.get().asFile,
+        ]
+        resources.srcDirs = [
+            versionDir.toPath().resolve('common/src/main/resources').toFile(),
+            versionDir.toPath().resolve('fabric/src/main/resources').toFile(),
+            commonGeneratedResourcesDir.get().asFile,
+            generatedResourcesDir.get().asFile,
+            rootProject.file('src/main/generated'),
+        ]
+    }
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+    toolchain.languageVersion = JavaLanguageVersion.of(requiredProp('project.java').toInteger())
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+['compileJava', 'processResources', 'sourcesJar', 'javadoc'].each { taskName ->
+    tasks.named(taskName).configure {
+        dependsOn commonProject.tasks.named('stonecutterGenerate')
+        dependsOn tasks.named('stonecutterGenerate')
+    }
+}
+
+dependencies {
+    compileOnly library('mixin')
+    compileOnly library('mixin-extras')
+    annotationProcessor library('mixin-extras')
+    implementation library('gson')
+
+    minecraft library('minecraft')
+
+    if (!useUnobfuscatedMinecraft) {
+        mappings loom.layered {
+            officialMojangMappings()
+            parchment library('parchment')
+        }
+        modImplementation library('fabric-loader')
+    } else {
+        implementation library('fabric-loader')
+    }
+
+    if (useUnobfuscatedMinecraft) {
+        implementation library('fabric-api')
+        implementation library('modmenu')
+    } else {
+        modImplementation library('fabric-api')
+        modImplementation library('modmenu')
+    }
+}
+
+loom {
+    if (accessWidener.exists()) {
+        accessWidenerPath.set(accessWidener)
+    }
+
+    mixin {
+        defaultRefmapName.set("${modId}.refmap.json")
+    }
+
+    runs {
+        client {
+            client()
+            setConfigName('Fabric Client')
+            ideConfigGenerated(true)
+            runDir('runs/client')
+        }
+        server {
+            server()
+            setConfigName('Fabric Server')
+            ideConfigGenerated(true)
+            runDir('runs/server')
+        }
+    }
+}
+
+def expandProps = project.ext.expandProps.call(project, minecraftVersion, loader, catalog)
+def jsonExpandProps = expandProps.collectEntries { key, value ->
+    [(key): value instanceof String ? value.replace('\n', '\\\\n') : value]
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    inputs.properties(expandProps.findAll { _, value -> value != null })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    filesMatching(['pack.mcmeta', 'fabric.mod.json', '*.mixins.json']) {
+        expand(jsonExpandProps)
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest.attributes([
+        'Specification-Title'   : modName,
+        'Specification-Vendor'  : optionalProp('mod.authors'),
+        'Specification-Version' : version.toString(),
+        'Implementation-Title'  : loader,
+        'Implementation-Version': version.toString(),
+        'Implementation-Vendor' : optionalProp('mod.authors'),
+        'Built-On-Minecraft'    : minecraftVersion,
+        'Built-By'              : 'stonecutter',
+    ])
+}
+
+tasks.named('sourcesJar', Jar).configure {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = base.archivesName.get()
+        }
+    }
+}
+
+project.ext.publishingRepositories.call(extensions.getByType(PublishingExtension), version.toString())
