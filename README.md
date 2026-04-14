@@ -1,45 +1,89 @@
 # Template
 
-A reusable multi-loader Minecraft mod template built around Stonecutter.
+A Stonecutter-based multi-loader Minecraft mod template.
+
+This repo is meant to stay small at the top level. Most build logic lives in the `multiloader-conventions` plugins, so the template mostly contains source, version data, and thin Gradle entrypoints.
+
+## Quick Start
+
+Build everything:
+
+```bash
+./gradlew build
+```
+
+List supported nodes:
+
+```bash
+just list-nodes
+```
+
+Build one node:
+
+```bash
+just build 1.21.11-forge
+```
+
+Run one node:
+
+```bash
+just run-client 1.21.10-fabric
+```
+
+Run version- or loader-scoped Gradle tasks through the compatibility wrapper:
+
+```bash
+just run downloadTranslations
+just run 1.21.11 publishMod -Ppublish.dry-run=true
+just run 1.21.11 forge publishModrinth -Ppublish.dry-run=true
+just run 1.21.11 forge runClient
+```
+
+Validate the whole matrix:
+
+```bash
+just build-all
+just boot-check-all 80
+```
+
+`boot-check-all` starts each client, waits up to the given timeout in seconds, and checks that startup reached the expected client path.
 
 ## Layout
 
-This repository uses a branch-based Stonecutter layout.
-
-Shared code lives in:
+Shared source lives in:
 
 - `common/`
 - `fabric/`
 - `forge/`
 - `neoforge/`
 
-Version-specific configuration and overlays live in `versions/<mc-version>/`:
+Version-specific configuration and overrides live in `versions/<mc-version>/`:
 
-- `gradle.properties` for metadata and toolchain settings
-- `common/src/main/...` for shared per-version overrides
-- `<loader>/src/main/...` for loader-specific per-version overrides
+- `gradle.properties` for metadata, Java version, and enabled loaders
+- `common/src/main/...` for shared version-specific overrides
+- `<loader>/src/main/...` for loader-specific version-specific overrides
 
-Stonecutter exposes those as versioned subprojects:
+Stonecutter exposes those as versioned projects:
 
 - `:common:<mc-version>`
 - `:fabric:<mc-version>`
 - `:forge:<mc-version>`
 - `:neoforge:<mc-version>`
 
-Generated branch workdirs live under `common/versions/`, `fabric/versions/`, `forge/versions/`, and `neoforge/versions/`. They are build output and ignored by Git.
+Generated branch workdirs live under `common/versions/`, `fabric/versions/`, `forge/versions/`, and `neoforge/versions/`. They are build output and are ignored by Git.
 
-## Common Artifact
+## Common
 
-`common` is a real standalone artifact, not just a source bucket.
+`common` is a real standalone artifact.
 
 - `:common:<mc-version>` builds on its own
-- loader projects consume the generated `common` sources/resources for the same Minecraft line
+- loader projects consume the generated `common` sources and resources for the same Minecraft line
 - `common` can reference Minecraft classes directly
 
-The standalone `common` build uses the same style as the library mods in this workspace:
+The standalone common build is version-aware:
 
-- `1.20.1`: LegacyForge-backed common artifact
-- `1.21.1+`: NeoForm / ModDev-backed common artifact
+- `1.20.1` uses the LegacyForge-backed path
+- `1.21.1+` uses the NeoForm / ModDev path
 
 ## Supported Nodes
 
@@ -64,69 +108,31 @@ The standalone `common` build uses the same style as the library mods in this wo
 - `26.1.2-forge`
 - `26.1.2-neoforge`
 
-## Common Workflow
-
-Build the whole repo from the root:
-
-```bash
-./gradlew build
-```
-
-Show the generated project graph:
-
-```bash
-just projects
-```
-
-List nodes:
-
-```bash
-just list-nodes
-```
-
-Build a specific node:
-
-```bash
-just build 1.21.11-forge
-```
-
-Run a specific node:
-
-```bash
-just run-client 1.21.10-fabric
-```
-
-Validate the full matrix:
-
-```bash
-just build-all
-just boot-check-all 80
-```
-
-`boot-check-all` launches each client, waits up to the given timeout in seconds, and verifies that the game reached the client render path before terminating it.
-
-Delete generated Stonecutter branch workdirs:
-
-```bash
-just clean-generated
-```
-
-## Editing Guidance
+## Editing Notes
 
 - Put loader-agnostic code in `common/`.
 - Use `versions/<mc-version>/common/` when a Minecraft line needs a shared override.
-- Use `versions/<mc-version>/<loader>/` when only one loader on one line diverges.
-- Update `versions/<mc-version>/gradle.properties` when adding a new line or changing metadata.
+- Use `versions/<mc-version>/<loader>/` when only one loader on one line differs.
+- Update `versions/<mc-version>/gradle.properties` when adding a new line or changing version-specific metadata.
 - Prefer Stonecutter preprocess guards for small API drift instead of duplicating whole files.
 
-## Validation Status
+The root entrypoints are intentionally thin:
 
-The current Stonecutter port has been verified to:
+- [settings.gradle.kts](settings.gradle.kts)
+- [stonecutter.gradle.kts](stonecutter.gradle.kts)
+- `common/build.gradle`
+- `fabric/build.gradle`
+- `forge/build.gradle`
+- `neoforge/build.gradle`
+
+## Status
+
+This template has been verified to:
 
 - build from the root with `./gradlew build`
-- build every supported loader/version node
+- build every supported node
 - boot a client on every supported node
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+Licensed under the MIT License. See [LICENSE](LICENSE).

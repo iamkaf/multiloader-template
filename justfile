@@ -18,6 +18,159 @@ projects:
 clean-generated:
   @rm -rf .stonecutter common/versions fabric/versions forge/versions neoforge/versions
 
+run first="" second="" *rest:
+  @if [ -z "{{first}}" ]; then \
+    echo "Usage: just run [version] [loader] <gradle args>"; \
+    exit 1; \
+  fi
+  @first="{{first}}"; \
+  second="{{second}}"; \
+  rest=( {{rest}} ); \
+  task_suffix() { \
+    local version="$1"; \
+    local loader="$2"; \
+    local digits loader_cap; \
+    digits="${version//./}"; \
+    loader_cap="${loader^}"; \
+    printf '%s%s' "$digits" "$loader_cap"; \
+  }; \
+  ensure_loader_enabled() { \
+    local version="$1"; \
+    local loader="$2"; \
+    if ! just list-loaders "$version" | grep -Fxq "$loader"; then \
+      echo "Loader $loader is not enabled for $version"; \
+      exit 1; \
+    fi; \
+  }; \
+  run_gradle() { \
+    local version="$1"; \
+    shift; \
+    local props="versions/$version/gradle.properties"; \
+    local java_version sdkman_dir best_match java_home; \
+    if [ ! -f "$props" ]; then \
+      echo "Version $version not found."; \
+      exit 1; \
+    fi; \
+    java_version=$(sed -nE 's/^project\.build-java=([0-9]+).*/\1/p' "$props" | head -n1); \
+    if [ -z "$java_version" ]; then \
+      java_version=$(sed -nE 's/^project\.java=([0-9]+).*/\1/p' "$props" | head -n1); \
+    fi; \
+    sdkman_dir="$HOME/.sdkman/candidates/java"; \
+    if [ -n "$java_version" ] && [ -d "$sdkman_dir" ]; then \
+      best_match=$(find "$sdkman_dir" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | grep -E "^${java_version}(\\.|-)" | sort -V | tail -n1 || true); \
+      if [ -n "$best_match" ]; then \
+        java_home="$sdkman_dir/$best_match"; \
+        export JAVA_HOME="$java_home"; \
+        export PATH="$JAVA_HOME/bin:$PATH"; \
+      fi; \
+    fi; \
+    ./gradlew "$@" --console=plain; \
+  }; \
+  if [ -d "versions/$first" ]; then \
+    version="$first"; \
+    if [ -z "$second" ]; then \
+      echo "Usage: just run <version> [loader] <gradle args>"; \
+      exit 1; \
+    fi; \
+    tasks=(); \
+    if printf '%s\n' fabric forge neoforge | grep -Fxq "$second"; then \
+      loader="$second"; \
+      ensure_loader_enabled "$version" "$loader"; \
+      if [ "${#rest[@]}" -eq 0 ]; then \
+        echo "Usage: just run <version> <loader> <gradle args>"; \
+        exit 1; \
+      fi; \
+      task="${rest[0]}"; \
+      extra=( "${rest[@]:1}" ); \
+      case "$task" in \
+        publish) \
+          tasks=( ":$loader:$version:publishAllPublicationsToKafMavenRepository" "${extra[@]}" ); \
+          ;; \
+        publishMod|publishRelease) \
+          suffix=$(task_suffix "$version" "$loader"); \
+          tasks=( "publishCurseforge$suffix" "publishModrinth$suffix" "${extra[@]}" ); \
+          ;; \
+        publishModrinth) \
+          tasks=( "publishModrinth$(task_suffix "$version" "$loader")" "${extra[@]}" ); \
+          ;; \
+        publishCurseforge) \
+          tasks=( "publishCurseforge$(task_suffix "$version" "$loader")" "${extra[@]}" ); \
+          ;; \
+        *) \
+          if [[ "$task" == :* ]]; then \
+            tasks=( "$task" "${extra[@]}" ); \
+          else \
+            tasks=( ":$loader:$version:$task" "${extra[@]}" ); \
+          fi; \
+          ;; \
+      esac; \
+      run_gradle "$version" "${tasks[@]}"; \
+    else \
+      task="$second"; \
+      extra=( "${rest[@]}" ); \
+      case "$task" in \
+        downloadTranslations) \
+          tasks=( "downloadTranslations" "${extra[@]}" ); \
+          ;; \
+        runClient) \
+          echo "runClient requires a loader: just run <version> <loader> runClient"; \
+          exit 1; \
+          ;; \
+        build) \
+          tasks=( ":common:$version:build" ); \
+          for loader in $(just list-loaders "$version"); do \
+            tasks+=( ":$loader:$version:build" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        compileJava) \
+          tasks=( ":common:$version:compileJava" ); \
+          for loader in $(just list-loaders "$version"); do \
+            tasks+=( ":$loader:$version:compileJava" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        publish) \
+          tasks=( ":common:$version:publishAllPublicationsToKafMavenRepository" ); \
+          for loader in $(just list-loaders "$version"); do \
+            tasks+=( ":$loader:$version:publishAllPublicationsToKafMavenRepository" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        publishMod|publishRelease) \
+          for loader in $(just list-loaders "$version"); do \
+            suffix=$(task_suffix "$version" "$loader"); \
+            tasks+=( "publishCurseforge$suffix" "publishModrinth$suffix" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        publishModrinth) \
+          for loader in $(just list-loaders "$version"); do \
+            tasks+=( "publishModrinth$(task_suffix "$version" "$loader")" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        publishCurseforge) \
+          for loader in $(just list-loaders "$version"); do \
+            tasks+=( "publishCurseforge$(task_suffix "$version" "$loader")" ); \
+          done; \
+          tasks+=( "${extra[@]}" ); \
+          ;; \
+        *) \
+          tasks=( "$task" "${extra[@]}" ); \
+          ;; \
+      esac; \
+      run_gradle "$version" "${tasks[@]}"; \
+    fi; \
+  else \
+    tasks=( "$first" ); \
+    if [ -n "$second" ]; then \
+      tasks+=( "$second" ); \
+    fi; \
+    tasks+=( "${rest[@]}" ); \
+    ./gradlew "${tasks[@]}" --console=plain; \
+  fi
+
 build node:
   @if ! just list-nodes | grep -Fxq "{{node}}"; then \
     echo "Unknown Stonecutter node: {{node}}"; \
