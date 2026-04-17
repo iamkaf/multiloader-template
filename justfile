@@ -16,7 +16,7 @@ projects:
   @./gradlew projects --console=plain
 
 clean-generated:
-  @rm -rf .stonecutter common/versions fabric/versions forge/versions neoforge/versions
+  @rm -rf build versions/*/build common/versions fabric/versions forge/versions neoforge/versions
 
 run first="" second="" *rest:
   @if [ -z "{{first}}" ]; then \
@@ -64,7 +64,7 @@ run first="" second="" *rest:
         export PATH="$JAVA_HOME/bin:$PATH"; \
       fi; \
     fi; \
-    ./gradlew "$@" --console=plain; \
+    ./gradlew --configure-on-demand "$@" --console=plain; \
   }; \
   if [ -d "versions/$first" ]; then \
     version="$first"; \
@@ -173,25 +173,22 @@ run first="" second="" *rest:
 
 build node:
   @if ! just list-nodes | grep -Fxq "{{node}}"; then \
-    echo "Unknown Stonecutter node: {{node}}"; \
+    echo "Unknown node: {{node}}"; \
     exit 1; \
   fi
   @version="{{node}}"; loader="${version##*-}"; version="${version%-*}"; \
-  ./gradlew ":$loader:$version:build" --console=plain
+  ./gradlew --configure-on-demand ":$loader:$version:build" --console=plain
 
 run-client node:
   @if ! just list-nodes | grep -Fxq "{{node}}"; then \
-    echo "Unknown Stonecutter node: {{node}}"; \
+    echo "Unknown node: {{node}}"; \
     exit 1; \
   fi
   @version="{{node}}"; loader="${version##*-}"; version="${version%-*}"; \
-  ./gradlew ":$loader:$version:runClient" --console=plain
+  ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain
 
 build-all:
-  @for node in $(just list-nodes); do \
-    echo "==> $node"; \
-    just build "$node"; \
-  done
+  @./gradlew build --console=plain
 
 boot-check node timeout="80":
   @if ! just list-nodes | grep -Fxq "{{node}}"; then \
@@ -203,7 +200,7 @@ boot-check node timeout="80":
   loader="${node##*-}"; \
   log="/tmp/$node.run.log"; \
   set +e; \
-  timeout "{{timeout}}"s ./gradlew ":$loader:$version:runClient" --console=plain > "$log" 2>&1; \
+  timeout "{{timeout}}"s ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain > "$log" 2>&1; \
   status=$?; \
   set -e; \
   if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then \
@@ -218,4 +215,40 @@ boot-check-all timeout="80":
   @for node in $(just list-nodes); do \
     echo "==> $node"; \
     just boot-check "$node" "{{timeout}}"; \
+  done
+
+teakit-boot-check node timeout="60":
+  @if ! just list-nodes | grep -Fxq "{{node}}"; then \
+    echo "Unknown node: {{node}}"; \
+    exit 1; \
+  fi
+  @node="{{node}}"; \
+  version="${node%-*}"; \
+  loader="${node##*-}"; \
+  catalog="/home/kaf/code/mods/version-catalog/mc-$version/gradle/libs.versions.toml"; \
+  if [ ! -f "$catalog" ] || ! rg -q '^teakit = ' "$catalog"; then \
+    echo "TeaKit is not configured in the shared catalog for $version"; \
+    exit 1; \
+  fi; \
+  log="/tmp/template-$node.teakit.log"; \
+  set +e; \
+  timeout "{{timeout}}"s ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain \
+    -Dtemplate.withTeaKit=true \
+    -Dteakit.autoExitTitle=true \
+    -Dteakit.autoExitTitleDelayMs=2500 > "$log" 2>&1; \
+  status=$?; \
+  set -e; \
+  if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then \
+    tail -n 160 "$log"; \
+    exit "$status"; \
+  fi; \
+  grep -q 'Initializing Template on' "$log"; \
+  grep -q 'TeaKit auto-exit-at-title enabled' "$log"; \
+  grep -q 'TeaKit scheduling clean shutdown from title screen' "$log"; \
+  echo "TeaKit boot OK: $node (status=$status)"
+
+teakit-boot-check-all timeout="60":
+  @for node in $(just list-nodes); do \
+    echo "==> $node"; \
+    just teakit-boot-check "$node" "{{timeout}}"; \
   done
