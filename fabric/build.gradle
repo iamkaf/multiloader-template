@@ -1,3 +1,64 @@
 plugins {
     id 'com.iamkaf.multiloader.fabric'
 }
+
+def minecraftVersion = project.name
+def isModernLine = !minecraftVersion.startsWith('1.')
+def libs = catalogFor(project, minecraftVersion)
+def useTeaKit = providers.systemProperty('template.withTeaKit')
+    .orElse(providers.gradleProperty('template.withTeaKit'))
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
+
+dependencies {
+    if (useTeaKit) {
+        if (isModernLine) {
+            runtimeOnly library(libs, 'teakit-fabric')
+        } else {
+            modLocalRuntime library(libs, 'teakit-fabric')
+        }
+    }
+}
+
+tasks.withType(ProcessResources).configureEach {
+    if ([
+        '1.14.4',
+        '1.15', '1.15.1', '1.15.2',
+        '1.16.2', '1.16.3', '1.16.4', '1.16.5',
+        '1.17', '1.17.1',
+        '1.18', '1.18.1',
+    ].contains(minecraftVersion)) {
+        inputs.property('templateFabricApiDependencyId', 'fabric')
+        filesMatching('fabric.mod.json') {
+            filter { line -> line.replace('"fabric-api": "*",', '"fabric": "*",') }
+        }
+    }
+
+    if (minecraftVersion == '1.16' || minecraftVersion == '1.16.1') {
+        def fabricApiModuleDepends = '''"fabric-api-base": "*",
+        "fabric-command-api-v1": "*",
+        "fabric-lifecycle-events-v1": "*",
+        "fabric-networking-api-v1": "*",
+        "fabric-resource-loader-v0": "*",'''
+
+        inputs.property('templateFabricApiDependencyId', fabricApiModuleDepends)
+        filesMatching('fabric.mod.json') {
+            filter { line -> line.replace('"fabric-api": "*",', fabricApiModuleDepends) }
+        }
+    }
+
+    if (minecraftVersion == '1.19' || minecraftVersion == '1.19.1') {
+        def fabricApiModuleDepends = '''"fabric-api-base": "*",
+        "fabric-command-api-v2": "*",
+        "fabric-events-interaction-v0": "*",
+        "fabric-lifecycle-events-v1": "*",
+        "fabric-networking-api-v1": "*",
+        "fabric-rendering-v1": "*",'''
+
+        inputs.property('templateFabricApiDependencyId', fabricApiModuleDepends)
+        filesMatching('fabric.mod.json') {
+            filter { line -> line.replace('"fabric-api": "*",', fabricApiModuleDepends) }
+        }
+    }
+}

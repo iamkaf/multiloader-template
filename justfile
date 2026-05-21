@@ -46,7 +46,7 @@ run first="" second="" *rest:
     local version="$1"; \
     shift; \
     local props="versions/$version/gradle.properties"; \
-    local java_version sdkman_dir best_match java_home; \
+    local java_version sdkman_dir best_match java_home use_configure_on_demand task_arg; \
     if [ ! -f "$props" ]; then \
       echo "Version $version not found."; \
       exit 1; \
@@ -64,7 +64,18 @@ run first="" second="" *rest:
         export PATH="$JAVA_HOME/bin:$PATH"; \
       fi; \
     fi; \
-    ./gradlew --configure-on-demand "$@" --console=plain; \
+    use_configure_on_demand=1; \
+    for task_arg in "$@"; do \
+      if [[ "$task_arg" != :* && "$task_arg" != -* ]]; then \
+        use_configure_on_demand=0; \
+        break; \
+      fi; \
+    done; \
+    if [ "$use_configure_on_demand" -eq 1 ]; then \
+      ./gradlew --configure-on-demand "$@" --console=plain; \
+    else \
+      ./gradlew "$@" --console=plain; \
+    fi; \
   }; \
   if [ -d "versions/$first" ]; then \
     version="$first"; \
@@ -198,16 +209,41 @@ boot-check node timeout="80":
   @node="{{node}}"; \
   version="${node%-*}"; \
   loader="${node##*-}"; \
+  task="runClient"; \
+  legacy_forge_1165=0; \
+  if [ "$version" = "1.16.5" ] && [ "$loader" = "forge" ]; then task="runLegacyClient"; legacy_forge_1165=1; fi; \
+  ready_marker='TeaKit scheduling clean shutdown from title screen'; \
+  if [ "$legacy_forge_1165" -eq 1 ]; then ready_marker='Sound engine started'; fi; \
   log="/tmp/$node.run.log"; \
+  boot_marker='Initializing Template on'; \
   set +e; \
-  timeout "{{timeout}}"s ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain > "$log" 2>&1; \
-  status=$?; \
+  ./gradlew --configure-on-demand ":$loader:$version:$task" --console=plain > "$log" 2>&1 & \
+  gradle_pid=$!; \
+  deadline=$(( $(date +%s) + {{timeout}} )); \
+  status=124; \
+  while [ "$(date +%s)" -lt "$deadline" ]; do \
+    if grep -q "$boot_marker" "$log"; then \
+      status=124; \
+      break; \
+    fi; \
+    if ! kill -0 "$gradle_pid" 2>/dev/null; then \
+      wait "$gradle_pid"; \
+      status=$?; \
+      break; \
+    fi; \
+    sleep 1; \
+  done; \
+  if kill -0 "$gradle_pid" 2>/dev/null; then \
+    kill "$gradle_pid" 2>/dev/null || true; \
+    wait "$gradle_pid" || true; \
+  fi; \
+  pkill -f "$PWD/$loader/versions/$version/" 2>/dev/null || true; \
   set -e; \
   if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then \
     tail -n 160 "$log"; \
     exit "$status"; \
   fi; \
-  grep -q 'Initializing Template on' "$log"; \
+  grep -q "$boot_marker" "$log"; \
   grep -q 'Backend library:' "$log"; \
   echo "Boot OK: $node (status=$status)"
 
@@ -225,6 +261,11 @@ teakit-boot-check node timeout="60":
   @node="{{node}}"; \
   version="${node%-*}"; \
   loader="${node##*-}"; \
+  task="runClient"; \
+  legacy_forge_1165=0; \
+  if [ "$version" = "1.16.5" ] && [ "$loader" = "forge" ]; then task="runLegacyClient"; legacy_forge_1165=1; fi; \
+  ready_marker='TeaKit scheduling clean shutdown from title screen'; \
+  if [ "$legacy_forge_1165" -eq 1 ]; then ready_marker='Sound engine started'; fi; \
   catalog="/home/kaf/code/mods/version-catalog/mc-$version/gradle/libs.versions.toml"; \
   if [ ! -f "$catalog" ] || ! rg -q '^teakit = ' "$catalog"; then \
     echo "TeaKit is not configured in the shared catalog for $version"; \
@@ -232,19 +273,43 @@ teakit-boot-check node timeout="60":
   fi; \
   log="/tmp/template-$node.teakit.log"; \
   set +e; \
-  timeout "{{timeout}}"s ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain \
+  ./gradlew --configure-on-demand ":$loader:$version:$task" --console=plain \
     -Dtemplate.withTeaKit=true \
     -Dteakit.autoExitTitle=true \
-    -Dteakit.autoExitTitleDelayMs=2500 > "$log" 2>&1; \
-  status=$?; \
+    -Dteakit.autoExitTitleDelayMs=2500 > "$log" 2>&1 & \
+  gradle_pid=$!; \
+  deadline=$(( $(date +%s) + {{timeout}} )); \
+  status=124; \
+  while [ "$(date +%s)" -lt "$deadline" ]; do \
+    if grep -q "$ready_marker" "$log"; then \
+      status=124; \
+      break; \
+    fi; \
+    if ! kill -0 "$gradle_pid" 2>/dev/null; then \
+      wait "$gradle_pid"; \
+      status=$?; \
+      break; \
+    fi; \
+    sleep 1; \
+  done; \
+  if kill -0 "$gradle_pid" 2>/dev/null; then \
+    kill "$gradle_pid" 2>/dev/null || true; \
+    wait "$gradle_pid" || true; \
+  fi; \
+  pkill -f "$PWD/$loader/versions/$version/" 2>/dev/null || true; \
   set -e; \
   if [ "$status" -ne 0 ] && [ "$status" -ne 124 ]; then \
     tail -n 160 "$log"; \
     exit "$status"; \
   fi; \
   grep -q 'Initializing Template on' "$log"; \
-  grep -q 'TeaKit auto-exit-at-title enabled' "$log"; \
-  grep -q 'TeaKit scheduling clean shutdown from title screen' "$log"; \
+  grep -q 'TeaKit listening on' "$log"; \
+  if [ "$legacy_forge_1165" -eq 0 ]; then \
+    grep -q 'TeaKit auto-exit-at-title enabled' "$log"; \
+    grep -q 'TeaKit scheduling clean shutdown from title screen' "$log"; \
+  else \
+    grep -q 'Sound engine started' "$log"; \
+  fi; \
   echo "TeaKit boot OK: $node (status=$status)"
 
 teakit-boot-check-all timeout="60":
