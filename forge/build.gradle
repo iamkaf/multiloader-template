@@ -180,8 +180,11 @@ if (minecraftVersion == '1.16.5') {
         languageVersion = JavaLanguageVersion.of(16)
     }
     def assetIndex = providers.provider { '1.16' }
+    def assetsDir = providers.provider {
+        new File(gradle.gradleUserHomeDir, 'caches/fabric-loom/assets')
+    }
     def assetsDirPath = providers.provider {
-        new File(gradle.gradleUserHomeDir, 'caches/fabric-loom/assets').absolutePath
+        assetsDir.get().absolutePath
     }
     def legacyForgeNativesDir = layout.buildDirectory.dir('legacy-forge-natives')
     def legacyForgeNativesDirPath = providers.provider {
@@ -232,6 +235,12 @@ if (minecraftVersion == '1.16.5') {
             ".gradle/mavenizer/repo/net/minecraftforge/forge/${legacyForgeArtifactVersion.get()}"
         )
     }
+    def legacyForgeMavenizerCacheDir = providers.provider {
+        new File(
+            gradle.gradleUserHomeDir,
+            "caches/minecraftforge/forgegradle/mavenizer/caches/maven/forge/net/minecraftforge/forge/${legacyForgeArtifactVersion.get()}"
+        )
+    }
     def legacyForgeUserdevJar = providers.provider {
         def matches = fileTree(legacyForgeUserdevDir.get()) {
             include "forge-${legacyForgeArtifactVersion.get()}.jar"
@@ -247,6 +256,28 @@ if (minecraftVersion == '1.16.5') {
             throw new GradleException("Expected exactly one legacy Forge launcher jar in ${legacyForgeUserdevDir.get()}")
         }
         matches.first()
+    }
+    def legacyForgeRawUserdevJar = providers.provider {
+        def userdevJar = new File(
+            legacyForgeMavenizerCacheDir.get(),
+            "forge-${legacyForgeArtifactVersion.get()}-userdev.jar"
+        )
+        if (userdevJar.isFile()) {
+            return userdevJar
+        }
+
+        throw new GradleException("Missing legacy Forge userdev jar at ${userdevJar}")
+    }
+    def legacyForgeUserdevInjectJar = tasks.register('legacyForgeUserdevInjectJar', Jar) {
+        archiveClassifier.set('legacy-forge-userdev-inject')
+        from({
+            zipTree(legacyForgeRawUserdevJar.get()).matching { include 'inject/**' }
+        }) {
+            eachFile { details ->
+                details.path = details.path.replaceFirst('^inject/', '')
+            }
+            includeEmptyDirs = false
+        }
     }
     def legacyForgeVersionJson = providers.provider {
         def file = new File(
@@ -352,6 +383,7 @@ if (minecraftVersion == '1.16.5') {
         } as List<File>
         [
             legacyForgeServicesDir.get().asFile,
+            legacyForgeUserdevInjectJar.get().archiveFile.get().asFile,
             legacyForgeUserdevJar.get(),
             legacyForgeLauncherJar.get(),
             legacyClientExtraJar.get(),
@@ -367,6 +399,7 @@ if (minecraftVersion == '1.16.5') {
         compileOnly(files(legacyForgeSupportClasspath))
         runtimeOnly(files(legacyForgeUserdevJar))
         runtimeOnly(files(legacyForgeLauncherJar))
+        runtimeOnly(files(legacyForgeUserdevInjectJar))
         runtimeOnly 'net.jodah:typetools:0.6.3'
     }
 
@@ -395,6 +428,12 @@ if (minecraftVersion == '1.16.5') {
         }
         eachFile { details -> details.path = details.name }
         includeEmptyDirs = false
+    }
+    def prepareLegacyForgeAssets = tasks.register('prepareLegacyForgeAssets') {
+        outputs.dir(assetsDir)
+        doLast {
+            assetsDir.get().mkdirs()
+        }
     }
 
     def stageLegacyForgeServices = tasks.register('stageLegacyForgeServices') {
@@ -491,11 +530,18 @@ if (minecraftVersion == '1.16.5') {
         }
         if (task.name in ['runClient', 'runData']) {
             task.dependsOn(stageLegacyForgeNatives)
+            task.dependsOn(prepareLegacyForgeAssets)
         }
         if (task.name == 'runClient') {
+            task.dependsOn(stageLegacyForgeServices)
             task.dependsOn(stageTeaKitLegacyForgeMod)
             if (task.hasProperty('classpath')) {
-                task.classpath += files(legacyForgeUserdevJar, legacyForgeLauncherJar)
+                task.classpath += files(
+                    legacyForgeServicesDir,
+                    legacyForgeUserdevInjectJar,
+                    legacyForgeUserdevJar,
+                    legacyForgeLauncherJar
+                )
             }
         }
     }
@@ -503,7 +549,7 @@ if (minecraftVersion == '1.16.5') {
     tasks.register('runLegacyClient', JavaExec) {
         group = 'run'
         description = 'Launches the legacy 1.16.5 Forge dev client using the mapped userdev classpath.'
-        dependsOn 'classes', stageLegacyForgeNatives, stageLegacyForgeServices, stageLegacyForgeMod, stageTeaKitLegacyForgeMod
+        dependsOn 'classes', stageLegacyForgeNatives, prepareLegacyForgeAssets, stageLegacyForgeServices, stageLegacyForgeMod, stageTeaKitLegacyForgeMod
         javaLauncher.set(forgeRunLauncher)
         workingDir = layout.projectDirectory.dir('run').asFile
         mainClass = 'net.minecraftforge.userdev.LaunchTesting'
